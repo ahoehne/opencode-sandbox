@@ -1,0 +1,30 @@
+---
+name: CI Shellcheck
+
+on:
+  push:
+    branches: ["main"]
+
+  pull_request:
+    branches: ["main"]
+
+  workflow_dispatch:  # manual workflow run from Actions
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Shellcheck
+        run: sudo apt update && sudo apt install shellcheck  # needed for act
+
+      - name: Run shellcheck of install.sh in root directory
+        run: shellcheck install.sh
+      - name: Run shellcheck of entrypoint.sh in root directory
+        run: shellcheck entrypoint.sh
+      - name: Run shellcheck of uninstall.sh in root directory
+        run: shellcheck uninstall.sh
+
+
