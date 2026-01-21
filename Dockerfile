@@ -21,6 +21,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cargo \
     libwebkit2gtk-4.1-dev \
+    php-cli \
+    php-common \
+    php-json \
+    php-mbstring \
+    php-xml \
+    php-zip \
+    composer \
     && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && update-locale LANG=en_US.UTF-8 \
