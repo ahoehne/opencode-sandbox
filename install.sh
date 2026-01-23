@@ -10,9 +10,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+info() { echo -e "${GREEN}[INFO]${NC} $*"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
 # Detect available container runtime (prefer Podman, fallback to Docker)
 detect_container_runtime() {
@@ -42,13 +42,18 @@ check_runtime_prerequisites() {
 	if [ "$CONTAINER_RUNTIME" = "podman" ]; then
 		# Check if Podman socket is active (needed for rootless)
 		if ! systemctl --user is-active podman.socket &>/dev/null; then
-			error "Podman socket is not active. Enable it with:\n  systemctl --user enable --now podman.socket\n\nThen run this installer again."
+			error "Podman socket is not active. Enable it with:\n" \
+			  "systemctl --user enable --now podman.socket\n" \
+			  "Then run this installer again."
 		fi
 		info "Podman socket is active"
 	elif [ "$CONTAINER_RUNTIME" = "docker" ]; then
 		# Check if Docker daemon is running
 		if ! docker info &>/dev/null; then
-			error "Docker daemon is not running or not accessible.\nEnsure Docker is running and you have permission to use it:\n  sudo systemctl start docker\n  sudo usermod -aG docker \$USER  # Then log out and back in"
+			error "Docker daemon is not running or not accessible.\n" \
+			  "Ensure Docker is running and you have permission to use it:\n" \
+			  "sudo systemctl enable --now docker\n" \
+			  "sudo usermod -aG docker \$USER  # Then log out and back in"
 		fi
 		info "Docker daemon is accessible"
 	fi
