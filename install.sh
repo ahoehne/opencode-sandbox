@@ -14,7 +14,6 @@ info() { echo -e "${GREEN}[INFO]${NC} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
-# Detect available container runtime (prefer Podman, fallback to Docker)
 detect_container_runtime() {
 	# Check for podman first (preferred)
 	if command -v podman &>/dev/null; then
@@ -34,13 +33,13 @@ detect_container_runtime() {
 		return 0
 	fi
 
-	error "Neither Podman nor Docker found. Please install one:\n  Podman: https://podman.io/getting-started/installation\n  Docker: https://docs.docker.com/get-docker/"
+	error "Neither Podman nor Docker found. Please install one:\n" \
+	  "Podman: https://podman.io/getting-started/installation\n" \
+	  "Docker: https://docs.docker.com/get-docker/"
 }
 
-# Check runtime-specific prerequisites
 check_runtime_prerequisites() {
 	if [ "$CONTAINER_RUNTIME" = "podman" ]; then
-		# Check if Podman socket is active (needed for rootless)
 		if ! systemctl --user is-active podman.socket &>/dev/null; then
 			error "Podman socket is not active. Enable it with:\n" \
 			  "systemctl --user enable --now podman.socket\n" \
@@ -48,7 +47,6 @@ check_runtime_prerequisites() {
 		fi
 		info "Podman socket is active"
 	elif [ "$CONTAINER_RUNTIME" = "docker" ]; then
-		# Check if Docker daemon is running
 		if ! docker info &>/dev/null; then
 			error "Docker daemon is not running or not accessible.\n" \
 			  "Ensure Docker is running and you have permission to use it:\n" \
@@ -59,11 +57,9 @@ check_runtime_prerequisites() {
 	fi
 }
 
-# Get runtime-specific security flags
-# Podman supports --userns=keep-id, Docker does not
 get_security_flags() {
 	local runtime="$1"
-	local shell_type="$2"  # bash/zsh or fish
+	local shell_type="$2"
 
 	local user_flag
 	if [ "$shell_type" = "fish" ]; then
@@ -75,15 +71,14 @@ get_security_flags() {
 
 	local common_flags="--network host --read-only --tmpfs /tmp:rw,exec,size=1g --security-opt=no-new-privileges --cap-drop=ALL"
 
+  # Podman supports --userns=keep-id, Docker does not
 	if [ "$runtime" = "podman" ]; then
 		echo "--userns=keep-id $user_flag $common_flags"
 	else
-		# Docker: skip --userns=keep-id (Podman-specific)
 		echo "$user_flag $common_flags"
 	fi
 }
 
-# Get volume mounts (same for both runtimes)
 get_volume_mounts() {
 	local shell_type="$1"
 	local home_var
@@ -98,7 +93,6 @@ get_volume_mounts() {
 	echo "-v \"${home_var}/.sandboxes/opencode/.npm:/home/opencodeuser/.npm:Z\" -v \"${home_var}/.sandboxes/opencode/.opencode:/home/opencodeuser/.opencode:Z\" -v \"${home_var}/.sandboxes/opencode/.cache:/home/opencodeuser/.cache:Z\" -v \"${home_var}/.sandboxes/opencode/.local:/home/opencodeuser/.local:Z\" -v \"${home_var}/.sandboxes/opencode/.cargo:/home/opencodeuser/.cargo:Z\" -v \"${home_var}/.config/opencode:/home/opencodeuser/.config/opencode:Z\" -v \"\$PWD:/workspace:Z\" -w /workspace"
 }
 
-# Generate shell alias based on detected runtime
 generate_alias() {
 	local runtime="$1"
 	local shell_type="$2"
